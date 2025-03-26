@@ -337,6 +337,103 @@
                 font-weight: bold;
                 margin-top: 10px;
             }
+            .activity-icons-container {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.activity-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #7a275c;
+    transition: all 0.3s;
+    padding: 2px;
+}
+
+.activity-icon:hover {
+    transform: scale(1.2);
+}
+.customer-card {
+    /* Existing styles */
+    display: flex;
+    flex-wrap: nowrap; /* Prevent wrapping */
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+}
+
+.customer-info {
+    flex: 1;
+    min-width: 0; /* Allows text truncation */
+}
+
+.activity-icons-container {
+    display: flex;
+    gap: 5px;
+    margin: 0 10px;
+    flex-shrink: 0; /* Prevent shrinking */
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    max-width: 150px; /* Limit width to prevent pushing schedule button */
+}
+
+.activity-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #7a275c;
+    transition: all 0.3s;
+    padding: 2px;
+    flex-shrink: 0; /* Prevent icons from shrinking */
+}
+
+.schedule-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #7a275c;
+    transition: all 0.3s;
+    flex-shrink: 0; /* Prevent button from shrinking */
+}
+.action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.confirm-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #28a745; /* Green color for confirm */
+    transition: all 0.3s;
+}
+
+.confirm-btn:hover {
+    transform: scale(1.2);
+}
+
+#confirmationTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#confirmationTable th, #confirmationTable td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+#confirmationTable th {
+    background-color: #f8f9fa;
+}
         }
     </style>
 </head>
@@ -357,7 +454,11 @@
             <a href="expired_activities">
                 <button class="activity-btn">Activity History</button>
             </a>
+            <a href="{% url 'confirm_details' %}">
+                <button class="activity-btn">Confirm</button>
+            </a>
         </div>
+        
     </div>
 
     <div class="container">
@@ -372,26 +473,33 @@
                 {% for customer in customers %}
                     {% if customer.status_display == status %}
                     <div class="customer-card" draggable="true" data-id="{{ customer.id }}" ondragstart="drag(event)">
-                        <a href="{% url 'customer_details' customer.id %}">
-                            {{ customer.name }} - {{ customer.opportunity }}
-                        </a>
+                        <div class="customer-info">
+                            <a href="{% url 'customer_details' customer.id %}">
+                                {{ customer.name }} - {{ customer.company_name }}
+                            </a>
+                        </div>
                         
-                        <!-- Activity Icon Container -->
-                        <span class="activity-icon">
-                            {% if customer.activity == "call" %}
-                                <button onclick="makeCall('{{ customer.contact }}')">📞</button>
-                            {% elif customer.activity == "email" %}
-                                <button onclick="openEmailModal()"><i class='bx bx-envelope'></i></button>
-                            {% elif customer.activity == "whatsapp" %}
-                                <button onclick="openWhatsAppChat('{{ customer.contact }}')"><i class='bx bxl-whatsapp'></i></button>
-                            {% endif %}
-                        </span>
-                        
+                        <!-- Activity Icons Container -->
+                        <div class="activity-icons-container">
+                            {% for activity in customer.activities.all %}
+                                {% if activity.type == "call" %}
+                                    <button class="activity-icon" onclick="makeCall('{{ customer.contact }}')">📞</button>
+                                {% elif activity.type == "email" %}
+                                    <button class="activity-icon" onclick="openEmailModal()"><i class='bx bx-envelope'></i></button>
+                                {% elif activity.type == "whatsapp" %}
+                                    <button class="activity-icon" onclick="openWhatsAppChat('{{ customer.contact }}')"><i class='bx bxl-whatsapp'></i></button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <button class="confirm-btn" onclick="openConfirmModal('{{ customer.id }}', '{{ customer.company_name }}')">
+                            <i class='bx bx-check-circle'></i>
+                        </button>
                         <!-- Schedule Activity Button -->
-                        <button onclick="openScheduleModal('{{ customer.id }}')">
+                        <button class="schedule-btn" onclick="openScheduleModal('{{ customer.id }}')">
                             <i class='bx bx-alarm'></i>
                         </button>
-                    </div>                   
+                    </div>                  
                     {% endif %}
                 {% endfor %}
             </div>
@@ -438,7 +546,7 @@
         <input type="text" id="name" placeholder="Customer Name" required>
         <input type="text" id="contact" placeholder="Contact No" required>
         <input type="email" id="email" placeholder="Email" required>
-        <input type="text" id="opportunity" placeholder="Opportunity" required>
+        <input type="text" id="company_name" placeholder="Company Name" required>
         <div style="display: flex; justify-content: space-between; margin-top: 15px;">
             <button id="saveCustomer">Save</button>
             <button class="close-btn" onclick="closeCustomerModal()">Close</button>
@@ -465,6 +573,46 @@
         </div>
     </div>
 
+    <!-- Confirm Modal -->
+<div id="confirmModal" class="modal">
+    <h3>Confirm Customer Status</h3>
+    <input type="hidden" id="confirm_customer_id">
+    <label>Company Name:</label>
+    <input type="text" id="confirm_company_name" readonly>
+    
+    <label>Status:</label>
+    <select id="confirm_status" required>
+        <option value="">Select Status</option>
+        <option value="advertisement_confirm">Advertisement Confirm</option>
+        <option value="not_interested">Not Interested</option>
+    </select>
+    
+    <label>Date:</label>
+    <input type="date" id="confirm_date" required>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+        <button id="saveConfirmation">Save</button>
+        <button class="close-btn" onclick="closeConfirmModal()">Close</button>
+    </div>
+</div>
+
+<!-- Confirmation History Modal -->
+<div id="confirmationHistoryModal" class="modal">
+    <h3>Confirmation History</h3>
+    <table id="confirmationTable">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be populated here -->
+        </tbody>
+    </table>
+    <button class="close-btn" onclick="closeConfirmationHistoryModal()" style="margin-top: 15px;">Close</button>
+</div>
     <script>
         function openCustomerModal() {
             let currentDate = new Date().toISOString().split("T")[0]; 
@@ -486,77 +634,96 @@
         }
           
         // Saving the customer details
+                 
         $("#saveCustomer").click(function() {
-            let name = $("#name").val();
-            let contact = $("#contact").val();
-            let email = $("#email").val();
-            let opportunity = $("#opportunity").val();
-            let date = $("#date").val();
-            
-            if (!name || !contact || !email || !opportunity) {
-                alert("All fields are required!");
-                return;
-            }
+    let name = $("#name").val();
+    let contact = $("#contact").val();
+    let email = $("#email").val();
+    let opportunity = $("#opportunity").val();
+    let date = $("#date").val();  // Get the date value
 
-            $.ajax({
-                type: "POST",
-                url: "/add_customer/",
-                data: {
-                    name: name,
-                    contact: contact,
-                    email: email,
-                    opportunity: opportunity,
-                    csrfmiddlewaretoken: "{{ csrf_token }}"
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert("Customer saved successfully!");
-                        location.reload();
-                    } else {
-                        alert("Error: " + response.message);
-                    }
-                },
-                error: function(xhr) {
-                    alert("Error occurred: " + xhr.responseText);
-                }
-            });
-        });
+    // Remove date from required fields check since it's auto-filled
+    if (!name || !contact || !email || !opportunity) {
+        alert("All fields are required!");
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "/add_customer/",
+        data: {
+            name: name,
+            contact: contact,
+            email: email,
+            opportunity: opportunity,
+            date: date,  // Still include it in the data
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        },
+        success: function(response) {
+            if (response.success) {
+                alert("Customer saved successfully!");
+                location.reload();
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+});
+
 
         // Schedule Activity
         $("#scheduleActivity").click(function() {
-            let customerId = $("#customer_id").val();
-            let activityDate = $("#activity-date").val();
-            let activity = $("#activity").val();
-            let summary = $("#summary").val();
+    let customerId = $("#customer_id").val();
+    let activityDate = $("#activity-date").val();
+    let activity = $("#activity").val();
+    let summary = $("#summary").val();
 
-            if (!activityDate || !activity || !summary) {
-                alert("All fields are required!");
-                return;
-            }
+    if (!activityDate || !activity || !summary) {
+        alert("All fields are required!");
+        return;
+    }
 
-            $.ajax({
-                type: "POST",
-                url: "/save_activity/",
-                data: {
-                    customer_id: customerId,
-                    activity_date: activityDate,
-                    activity: activity,
-                    summary: summary,
-                    csrfmiddlewaretoken: "{{ csrf_token }}"
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert("Activity scheduled successfully!");
-                        location.reload();
-                    } else {
-                        alert("Error: " + response.message);
-                    }
-                },
-                error: function(xhr) {
-                    alert("Error occurred: " + xhr.responseText);
+    $.ajax({
+        type: "POST",
+        url: "/save_activity/",
+        data: {
+            customer_id: customerId,
+            activity_date: activityDate,
+            activity: activity,
+            summary: summary,
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        },
+        success: function(response) {
+            if (response.success) {
+                // Find the customer card
+                let card = $(`.customer-card[data-id='${customerId}']`);
+                let iconsContainer = card.find('.activity-icons-container');
+                
+                // Add the new activity icon
+                let newIcon;
+                if (activity === "call") {
+                    newIcon = `<button class="activity-icon" onclick="makeCall('${response.contact || ''}')">📞</button>`;
+                } else if (activity === "email") {
+                    newIcon = `<button class="activity-icon" onclick="openEmailModal()"><i class='bx bx-envelope'></i></button>`;
+                } else if (activity === "whatsapp") {
+                    newIcon = `<button class="activity-icon" onclick="openWhatsAppChat('${response.contact || ''}')"><i class='bx bxl-whatsapp'></i></button>`;
                 }
-            });
-        });
+                
+                iconsContainer.append(newIcon);
+                alert("Activity scheduled successfully!");
+                $("#scheduleModal").hide();
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+});
 
         function allowDrop(event) {
             event.preventDefault();
@@ -767,6 +934,97 @@
                 firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         }
+
+        // Confirm Modal Functions
+function openConfirmModal(customerId, companyName) {
+    let currentDate = new Date().toISOString().split("T")[0];
+    $("#confirm_customer_id").val(customerId);
+    $("#confirm_company_name").val(companyName);
+    $("#confirm_date").val(currentDate);
+    $("#confirmModal").show();
+}
+
+function closeConfirmModal() {
+    $("#confirmModal").hide();
+}
+
+function openConfirmationHistoryModal(customerId) {
+    $.ajax({
+        type: "GET",
+        url: "/get_confirmation_history/",
+        data: {
+            customer_id: customerId
+        },
+        success: function(response) {
+            if (response.success) {
+                let tableBody = $("#confirmationTable tbody");
+                tableBody.empty();
+                
+                response.confirmations.forEach(confirmation => {
+                    tableBody.append(`
+                        <tr>
+                            <td>${confirmation.company_name}</td>
+                            <td>${confirmation.status_display}</td>
+                            <td>${confirmation.date}</td>
+                        </tr>
+                    `);
+                });
+                
+                $("#confirmationHistoryModal").show();
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+}
+
+function closeConfirmationHistoryModal() {
+    $("#confirmationHistoryModal").hide();
+}
+
+// Save Confirmation
+$("#saveConfirmation").click(function() {
+    let customerId = $("#confirm_customer_id").val();
+    let companyName = $("#confirm_company_name").val();
+    let status = $("#confirm_status").val();
+    let date = $("#confirm_date").val();
+
+    if (!status || !date) {
+        alert("All fields are required!");
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "/save_confirmation/",
+        data: {
+            customer_id: customerId,
+            company_name: companyName,
+            status: status,
+            date: date,
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        },
+        success: function(response) {
+            if (response.success) {
+                alert("Confirmation saved successfully!");
+                closeConfirmModal();
+                
+                // Update the confirm button to show history
+                $(`.customer-card[data-id='${customerId}'] .confirm-btn`)
+                    .attr("onclick", `openConfirmationHistoryModal('${customerId}')`)
+                    .html(`<i class='bx bx-history'></i>`);
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+});
     </script>
 </body>
 </html>
