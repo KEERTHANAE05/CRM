@@ -1,0 +1,85 @@
+    <html>
+        <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>CUSTOMER DETAILS</title>
+        <style>
+            /* Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Customer Details Box */
+.customer {
+    background: linear-gradient(135deg, #5ec9ed, #007bff); /* Gradient Blue */
+    color: white;
+    padding: 20px;
+    width: 400px;
+    text-align: center;
+    border-radius: 10px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Hover Effect */
+.customer:hover {
+    transform: scale(1.05);
+}
+
+/* Headings */
+h1 {
+    font-size: 22px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
+
+/* Paragraphs */
+p {
+    font-size: 16px;
+    margin: 10px 0;
+    font-weight: bold;
+}
+
+/* Home Button */
+a {
+    display: inline-block;
+    background-color: white;
+    color: #007bff;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    border: 2px solid white;
+    transition: 0.3s;
+}
+
+a:hover {
+    background-color: #0056b3;
+    color: white;
+    border: 2px solid #0056b3;
+}
+
+        </style>
+        </head>
+        <body>
+            <div class="customer">
+            <center>
+            <h1>CUSTOMER DETAILS</h1>           
+            <p>Customer Name: {{ customer.name }}</p>
+            <p>Contact Number: {{ customer.contact }}</p>
+            <p>Email Id: {{ customer.email }}</p>
+            <p>Customer Opportunity: {{ customer.opportunity }}</p>
+            <P>Customer Status: {{ customer.status }}</P>
+            <a href="{% url 'index' %}">HOME</a>
+          
+            </center>
+            </div>
+        </body>
+    </html>

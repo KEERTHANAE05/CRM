@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drag & Drop CRM</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/boxicons@2.1.4/dist/boxicons.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css">
+    <link rel="preload" href="https://unpkg.com/boxicons@2.1.4/fonts/boxicons.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #b1cee7;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        
+        /* Fixed Header */
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            z-index: 1000;
+            padding: 15px 20px;
+            border-bottom: 2px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .fixed-header h1 {
+            color: #34495e;
+            font-size: 24px;
+            margin-right: auto;
+        }
+        
+        /* Search Container */
+        .search-container {
+            position: relative;
+            margin-right: 20px;
+        }
+        
+        #searchInput {
+            width: 300px;
+            height: 36px;
+            padding: 8px 15px;
+            font-size: 16px;
+            border-radius: 20px;
+            border: 2px solid #ccc;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        #searchInput:focus {
+            border-color: #7a275c;
+            box-shadow: 0 0 5px rgba(122, 39, 92, 0.3);
+        }
+        
+        #notFoundMessage {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            color: red;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        /* Activity Buttons */
+        .activity-style {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .activity-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #fa6cb8;
+            color: white;
+            border-radius: 5px;
+            border: none;
+            transition: all 0.3s;
+        }
+        
+        .activity-btn:hover {
+            background-color: #d886b2;
+        }
+        
+        /* Main Container */
+        .container {
+            display: flex;
+            gap: 20px;
+            justify-content: flex-start;
+            align-items: flex-start;
+            padding: 100px 20px 20px;
+            overflow-x: auto;
+            min-height: calc(100vh - 100px);
+        }
+        
+        /* Columns */
+        .column {
+            min-width: 250px;
+            width: 100%;
+            min-height: 500px;
+            padding: 15px;
+            border-radius: 10px;
+            background-color: #ffffff;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .column:hover {
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        
+        .column h3 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .column-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .add-button {
+            font-size: 20px;
+            cursor: pointer;
+            color: #7a275c;
+            transition: all 0.3s;
+        }
+        
+        .add-button:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Customer Cards */
+        .customer-card {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f0f8ff;
+            cursor: grab;
+            border-radius: 8px;
+            width: 95%;
+            text-align: left;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .customer-card:hover {
+            background: #e0f0ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .customer-card a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .activity-icon {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+        
+        .activity-icon button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: #7a275c;
+            transition: all 0.3s;
+        }
+        
+        .activity-icon button:hover {
+            transform: scale(1.2);
+        }
+        
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            width: 400px;
+            max-width: 90%;
+            z-index: 2000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        #emailModal {
+            width: 600px;
+        }
+        
+        .modal h3 {
+            color: #7a275c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .modal label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .modal input,
+        .modal select,
+        .modal textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .modal textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        
+        .modal button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        #saveCustomer,
+        #sendEmail,
+        #scheduleActivity {
+            background-color: #7a275c;
+            color: white;
+        }
+        
+        .close-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .modal button:hover {
+            opacity: 0.9;
+        }
+        
+        /* Overlay */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        /* Highlight for search */
+        .highlight {
+            background-color: yellow;
+            font-weight: bold;
+            padding: 0 2px;
+            border-radius: 3px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .fixed-header {
+                flex-direction: column;
+                padding: 10px;
+            }
+            
+            .search-container {
+                position: relative;
+                top: 10px;
+                text-align: center;
+                margin-bottom: 10px;
+                z-index: 1000;
+                width: 100%;
+            }
+            
+            #searchInput {
+                width: 100%;
+                height: 30px;
+                padding: 10px;
+                font-size: 18px;
+                border-radius: 8px;
+            }
+            
+            .activity-style {
+                margin-top: 10px;
+            }
+            
+            .container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .column {
+                width: 90%;
+                margin-bottom: 20px;
+            }
+            
+            #notFoundMessage {
+                color: red;
+                font-weight: bold;
+                margin-top: 10px;
+            }
+            .activity-icons-container {
+                display: flex;
+                gap: 5px;
+                margin-top: 8px;
+                flex-wrap: wrap;
+            }
+
+            .activity-icon {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 18px;
+                color: #7a275c;
+                transition: all 0.3s;
+                padding: 2px;
+            }
+
+            .activity-icon:hover {
+                transform: scale(1.2);
+            }
+            .customer-card {
+                /* Existing styles */
+                display: flex;
+                flex-wrap: nowrap; /* Prevent wrapping */
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px;
+            }
+
+            .customer-info {
+                flex: 1;
+                min-width: 0; /* Allows text truncation */
+            }
+
+            .activity-icons-container {
+                display: flex;
+                gap: 5px;
+                margin: 0 10px;
+                flex-shrink: 0; /* Prevent shrinking */
+                overflow-x: auto; /* Allow horizontal scrolling if needed */
+                max-width: 150px; /* Limit width to prevent pushing schedule button */
+            }
+
+            .activity-icon {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 18px;
+                color: #7a275c;
+                transition: all 0.3s;
+                padding: 2px;
+                flex-shrink: 0; /* Prevent icons from shrinking */
+            }
+
+            .schedule-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 18px;
+                color: #7a275c;
+                transition: all 0.3s;
+                flex-shrink: 0; /* Prevent button from shrinking */
+            }
+            .action-buttons {
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            .confirm-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                font-size: 18px;
+                color: #28a745; /* Green color for confirm */
+                transition: all 0.3s;
+                gap : 0.5cm;
+            }
+
+            .confirm-btn:hover {
+                transform: scale(1.2);
+            }
+            /* Add to your existing CSS */
+            .summary-btn {
+                padding: 8px 16px;
+                font-size: 14px;
+                cursor: pointer;
+                background-color: #28a745; /* Green color */
+                color: white;
+                border-radius: 5px;
+                border: none;
+                transition: all 0.3s;
+                margin-right: 10px;
+            }
+
+            .summary-btn:hover {
+                background-color: #218838;
+            }
+            .confirm-container {
+                margin-right: 0.5cm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="fixed-header">
+        <h1>CRM</h1>
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" id="searchInput" placeholder="Search customers..." onkeyup="searchCustomer()">
+            <p id="notFoundMessage"></p>
+        </div>
+        <div class="confirm-container">
+            <a href="{% url 'confirmation_page' %}">
+                <button class="activity-btn">Confirm</button>
+            </a>
+        </div>
+        
+        <div class="activity-style">
+            <a href="{% url 'customer_schedule' %}">
+                <button class="activity-btn">Activity</button>
+            </a>
+            <a href="expired_activities">
+                <button class="activity-btn">Activity History</button>
+            </a>
+           
+        </div>
+        
+    </div>
+
+    <div class="container">
+        {% for status in statuses %}
+            <div class="column" id="{{ status }}" ondragover="allowDrop(event)" ondrop="drop(event, '{{ status }}')">
+                <div class="column-header">
+                    <h3>{{ status }}</h3>
+                    {% if status == "New" %}
+                    <span class="add-button" onclick="openCustomerModal()">➕</span>
+                    {% endif %}
+                </div>
+                {% for customer in customers %}
+                    {% if customer.status_display == status %}
+                    <div class="customer-card" draggable="true" data-id="{{ customer.id }}" ondragstart="drag(event)">
+                        <div class="customer-info">
+                            <a href="{% url 'customer_details' customer.id %}">
+                                {{ customer.name }} - {{ customer.company_name }}
+                            </a>
+                        </div>
+                        
+                        <!-- Activity Icons Container -->
+                        <div class="activity-icons-container">
+                            {% for activity in customer.activities.all %}
+                                {% if activity.type == "call" %}
+                                    <button class="activity-icon" onclick="makeCall('{{ customer.contact }}')">📞</button>
+                                {% elif activity.type == "email" %}
+                                    <button class="activity-icon" onclick="openEmailModal()"><i class='bx bx-envelope'></i></button>
+                                {% elif activity.type == "whatsapp" %}
+                                    <button class="activity-icon" onclick="openWhatsAppChat('{{ customer.contact }}')"><i class='bx bxl-whatsapp'></i></button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <button class="confirm-btn" onclick="openConfirmModal('{{ customer.id }}', '{{ customer.company_name }}')">
+                            <i class='bx bx-check-circle'></i>
+                        </button>
+                        <!-- Schedule Activity Button -->
+                        <button class="schedule-btn" onclick="openScheduleModal('{{ customer.id }}')">
+                            <i class='bx bx-alarm'></i>
+                        </button>
+                    </div>                  
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+ 
+    <!-- Activity Modal -->
+    <div id="activityModal" class="modal">
+        <h3>Scheduled Activities</h3>
+        <ul id="activityList">
+            {% for activity in activities %}
+                <li>{{ activity.type }} - {{ activity.customer_email }} - {{ activity.date }}</li>
+            {% endfor %}
+        </ul>
+        <button class="close-btn" onclick="closeActivityModal()">Close</button>
+    </div>
+
+    <!-- Send Email Modal -->
+    <div id="emailModal" class="modal">
+        <h3>Send Email</h3>
+        
+        <label>From:</label>
+        <input type="email" id="fromEmail" value="keerthikala1105@gmail.com" readonly>
+        
+        <label>To:</label>
+        <input type="email" id="toEmail" placeholder="Enter recipient email">
+        
+        <label>Subject:</label>
+        <input type="text" id="emailSubject" placeholder="Enter subject">
+        
+        <label>Message:</label>
+        <textarea id="emailMessage" placeholder="Type your message"></textarea>
+        
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+            <button id="sendEmail">Send</button>
+            <button class="close-btn" onclick="closeEmailModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div id="customerModal" class="modal">
+        <h3>Add Customer</h3>
+        <input type="text" id="date" readonly>
+        <input type="text" id="name" placeholder="Customer Name" required>
+        <input type="text" id="contact" placeholder="Contact No" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="company_name" placeholder="Company Name" required>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+            <button id="saveCustomer">Save</button>
+            <button class="close-btn" onclick="closeCustomerModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Schedule Activity Modal -->
+    <div id="scheduleModal" class="modal">
+        <h3>Schedule Activity</h3>
+        <input type="hidden" id="customer_id">
+        <label>Date:</label>
+        <input type="date" id="activity-date" required>
+        <label>Activity:</label>
+        <select id="activity">
+            <option value="call">Call</option>
+            <option value="email">Email</option>
+            <option value="whatsapp">WhatsApp</option>
+        </select>
+        <label>Summary:</label>
+        <input type="text" id="summary" placeholder="Summary" required>
+        <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+            <button id="scheduleActivity">Schedule</button>
+            <button class="close-btn" onclick="closeScheduleModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+<div id="confirmModal" class="modal">
+    <h3>Confirm Customer Status</h3>
+    <input type="hidden" id="confirm_customer_id">
+    <label>Company Name:</label>
+    <input type="text" id="confirm_company_name" readonly>
+    
+    <label>Status:</label>
+    <select id="confirm_status" required>
+        <option value="">Select Status</option>
+        <option value="advertisement_confirm">Advertisement Confirm</option>
+        <option value="not_interested">Not Interested</option>
+    </select>
+    
+    <label>Date:</label>
+    <input type="date" id="confirm_date" required>
+    
+    <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+        <button id="saveConfirmation">Save</button>
+        <button class="close-btn" onclick="closeConfirmModal()">Close</button>
+    </div>
+</div>
+
+<!-- Confirmation History Modal -->
+<div id="confirmationHistoryModal" class="modal">
+    <h3>Confirmation History</h3>
+    <table id="confirmationTable">
+        <thead>
+            <tr>
+                <th>Company Name</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Data will be populated here -->
+        </tbody>
+    </table>
+    <button class="close-btn" onclick="closeConfirmationHistoryModal()" style="margin-top: 15px;">Close</button>
+</div>
+    <script>
+        function openCustomerModal() {
+            let currentDate = new Date().toISOString().split("T")[0]; 
+            $("#date").val(currentDate); 
+            $("#customerModal").show();
+        }
+        
+        function closeCustomerModal() {
+            $("#customerModal").hide();
+        }
+        
+        function openScheduleModal(customerId) {
+            $("#customer_id").val(customerId);
+            $("#scheduleModal").show();
+        }
+        
+        function closeScheduleModal() {
+            $("#scheduleModal").hide();
+        }
+          
+        // Saving the customer details
+                 
+        $("#saveCustomer").click(function() {
+    let name = $("#name").val();
+    let contact = $("#contact").val();
+    let email = $("#email").val();
+    let opportunity = $("#opportunity").val();
+    let date = $("#date").val();  // Get the date value
+
+    // Remove date from required fields check since it's auto-filled
+    if (!name || !contact || !email || !opportunity) {
+        alert("All fields are required!");
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "/add_customer/",
+        data: {
+            name: name,
+            contact: contact,
+            email: email,
+            opportunity: opportunity,
+            date: date,  // Still include it in the data
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        },
+        // In your existing JavaScript, modify the success callback:
+success: function(response) {
+    if (response.success) {
+        alert("Confirmation saved successfully!");
+        closeConfirmModal();
+        // Redirect to confirmation page
+        window.location.href = "{% url 'confirmation_page' %}";
+    } else {
+        alert("Error: " + response.message);
+    }
+},
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+});
+
+
+        // Schedule Activity
+        $("#scheduleActivity").click(function() {
+    let customerId = $("#customer_id").val();
+    let activityDate = $("#activity-date").val();
+    let activity = $("#activity").val();
+    let summary = $("#summary").val();
+
+    if (!activityDate || !activity || !summary) {
+        alert("All fields are required!");
+        return;
+    }
+
+    $.ajax({
+        type: "POST",
+        url: "/save_activity/",
+        data: {
+            customer_id: customerId,
+            activity_date: activityDate,
+            activity: activity,
+            summary: summary,
+            csrfmiddlewaretoken: "{{ csrf_token }}"
+        },
+        success: function(response) {
+            if (response.success) {
+                // Find the customer card
+                let card = $(`.customer-card[data-id='${customerId}']`);
+                let iconsContainer = card.find('.activity-icons-container');
+                
+                // Add the new activity icon
+                let newIcon;
+                if (activity === "call") {
+                    newIcon = `<button class="activity-icon" onclick="makeCall('${response.contact || ''}')">📞</button>`;
+                } else if (activity === "email") {
+                    newIcon = `<button class="activity-icon" onclick="openEmailModal()"><i class='bx bx-envelope'></i></button>`;
+                } else if (activity === "whatsapp") {
+                    newIcon = `<button class="activity-icon" onclick="openWhatsAppChat('${response.contact || ''}')"><i class='bx bxl-whatsapp'></i></button>`;
+                }
+                
+                iconsContainer.append(newIcon);
+                alert("Activity scheduled successfully!");
+                $("#scheduleModal").hide();
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+});
+
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            let customer_id = event.target.dataset.id;
+            let current_column = event.target.closest(".column").id;
+            event.dataTransfer.setData("customer_id", customer_id);
+            event.dataTransfer.setData("current_column", current_column);
+        }
+
+        $(".column").on("drop", function(e) {
+            e.preventDefault();
+
+            let customer_id = e.originalEvent.dataTransfer.getData("customer_id");
+            let current_column = e.originalEvent.dataTransfer.getData("current_column");
+            let new_status = $(this).attr("id");
+
+            let columnOrder = $(".column").map(function() {
+                return this.id;
+            }).get();
+
+            let currentIndex = columnOrder.indexOf(current_column);
+            let newIndex = columnOrder.indexOf(new_status);
+
+            if (newIndex === -1 || currentIndex === -1) {
+                alert("Invalid move! Column ID mismatch.");
+                return;
+            }
+
+            if (newIndex > currentIndex) {
+                $(this).append($(`.customer-card[data-id='${customer_id}']`));
+
+                $.ajax({
+                    type: "POST",
+                    url: "/update_status/",
+                    data: {
+                        customer_id: customer_id,
+                        status: new_status,
+                        csrfmiddlewaretoken: "{{ csrf_token }}"
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log("Status updated successfully:", response.new_status);
+                        } else {
+                            alert("Failed to update status: " + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert("Error occurred: " + xhr.responseText);
+                    }
+                });
+            } else {
+                alert("You can only move forward to the next stage!");
+            }
+        });
+
+        // Activity Modal
+        function closeActivityModal() {
+            document.getElementById("activityModal").style.display = "none";
+        }
+
+        // Email Modal
+        function openEmailModal() {
+            $("#emailModal").show();
+        }
+
+        function closeEmailModal() {
+            $("#emailModal").hide();
+        }
+
+        // Sending Email
+        $(document).ready(function() {
+            $("#sendEmail").click(function() {
+                let fromEmail = $("#fromEmail").val().trim();
+                let toEmail = $("#toEmail").val().trim();
+                let subject = $("#emailSubject").val().trim();
+                let message = $("#emailMessage").val().trim();
+
+                if (!toEmail || !subject || !message) {
+                    alert("Please enter recipient email, subject, and message.");
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "/send_email/",
+                    data: {
+                        from_email: fromEmail,
+                        to_email: toEmail,
+                        subject: subject,
+                        message: message,
+                        csrfmiddlewaretoken: "{{ csrf_token }}"
+                    },
+                    success: function(response) {
+                        alert("Email sent successfully!");
+                        $("#emailModal").hide();
+                    },
+                    error: function(xhr) {
+                        alert("Failed to send email: " + xhr.responseText);
+                    }
+                });
+            });
+        });
+
+        // WhatsApp
+        function openWhatsAppChat(customerNumber) {
+            if (!customerNumber) {
+                alert("Customer number is missing!");
+                return;
+            }
+
+            let whatsappURL = `https://wa.me/${customerNumber}?text=Hello%20from%20CRM!`;
+            window.open(whatsappURL, "_blank");
+        }
+
+        // Call
+        function makeCall(phoneNumber) {
+            if (!phoneNumber) {
+                alert("Customer number is missing!");
+                return;
+            }
+            window.location.href = `tel:${phoneNumber}`;
+        }
+
+        // Search Functionality
+        function searchCustomer() {
+            const searchInput = document.getElementById("searchInput").value.trim().toLowerCase();
+            const customerCards = document.querySelectorAll(".customer-card");
+            const notFoundMessage = document.getElementById("notFoundMessage");
+            let found = false;
+            let firstMatch = null;
+
+            // First restore all cards to their original state
+            customerCards.forEach(card => {
+                if (card.dataset.originalHtml) {
+                    card.innerHTML = card.dataset.originalHtml;
+                }
+            });
+
+            if (searchInput === "") {
+                notFoundMessage.textContent = "";
+                return;
+            }
+
+            customerCards.forEach(card => {
+                // Store original HTML if not already stored
+                if (!card.dataset.originalHtml) {
+                    card.dataset.originalHtml = card.innerHTML;
+                }
+
+                // Get just the text content for searching (without HTML tags)
+                const textContent = card.textContent.toLowerCase();
+
+                if (textContent.includes(searchInput)) {
+                    found = true;
+                    
+                    // Create a temporary div to work with the HTML
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = card.dataset.originalHtml;
+
+                    // Process all text nodes
+                    const walker = document.createTreeWalker(
+                        tempDiv, 
+                        NodeFilter.SHOW_TEXT, 
+                        null, 
+                        false
+                    );
+
+                    const textNodes = [];
+                    while (walker.nextNode()) {
+                        textNodes.push(walker.currentNode);
+                    }
+
+                    textNodes.forEach(node => {
+                        // Skip if parent is a button or contains HTML we want to preserve
+                        if (node.parentNode.tagName === 'BUTTON' || 
+                            node.parentNode.tagName === 'I' || 
+                            node.parentNode.classList.contains('activity-icon')) {
+                            return;
+                        }
+
+                        const text = node.nodeValue;
+                        if (text.toLowerCase().includes(searchInput)) {
+                            const span = document.createElement('span');
+                            span.innerHTML = text.replace(
+                                new RegExp(searchInput, 'gi'), 
+                                match => `<span class="highlight">${match}</span>`
+                            );
+                            node.parentNode.replaceChild(span, node);
+                        }
+                    });
+
+                    // Update the card with the modified content
+                    card.innerHTML = tempDiv.innerHTML;
+
+                    if (!firstMatch) {
+                        firstMatch = card;
+                    }
+                }
+            });
+
+            notFoundMessage.textContent = found ? "" : "Not Found!";
+            
+            // Auto-scroll to the first matched customer
+            if (firstMatch) {
+                firstMatch.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+
+        /// Confirm Modal Functions
+function openConfirmModal(customerId, companyName) {
+    let currentDate = new Date().toISOString().split("T")[0];
+    $("#confirm_customer_id").val(customerId);
+    $("#confirm_company_name").val(companyName);
+    $("#confirm_date").val(currentDate);
+    $("#confirmModal").show();
+}
+
+function closeConfirmModal() {
+    $("#confirmModal").hide();
+}
+
+function openConfirmationHistoryModal(customerId) {
+    $.ajax({
+        type: "GET",
+        url: "/get_confirmation_history/",
+        data: {
+            customer_id: customerId
+        },
+        success: function(response) {
+            if (response.success) {
+                let tableBody = $("#confirmationTable tbody");
+                tableBody.empty();
+                
+                response.confirmations.forEach(confirmation => {
+                    tableBody.append(`
+                        <tr>
+                            <td>${confirmation.company_name}</td>
+                            <td>${confirmation.status_display}</td>
+                            <td>${confirmation.date}</td>
+                        </tr>
+                    `);
+                });
+                
+                $("#confirmationHistoryModal").show();
+            } else {
+                alert("Error: " + response.message);
+            }
+        },
+        error: function(xhr) {
+            alert("Error occurred: " + xhr.responseText);
+        }
+    });
+}
+
+function closeConfirmationHistoryModal() {
+    $("#confirmationHistoryModal").hide();
+}
+
+$("#saveConfirmation").click(function() {
+    // Show loading state
+    $(this).prop("disabled", true).text("Saving...");
+    
+    let formData = {
+        customer_id: $("#confirm_customer_id").val(),
+        company_name: $("#confirm_company_name").val(),
+        status: $("#confirm_status").val(),
+        date: $("#confirm_date").val(),
+        csrfmiddlewaretoken: "{{ csrf_token }}"
+    };
+
+    // Validate required fields
+    if (!formData.status || !formData.date) {
+        alert("Status and date are required!");
+        $(this).prop("disabled", false).text("Save");
+        return;
+    }
+
+    console.log("Sending data:", formData);
+
+    $.ajax({
+        type: "POST",
+        url: "/save_confirmation/",
+        data: formData,
+        dataType: "json",
+        success: function(response) {
+            console.log("Full response:", response);
+            if (response && response.success) {
+                alert(response.message || "Confirmation saved successfully!");
+                closeConfirmModal();
+                // Refresh the page to see changes
+                window.location.reload();
+            } else {
+                alert(response.message || "Server returned an error");
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("AJAX error details:", {
+                status: status,
+                error: error,
+                response: xhr.responseText
+            });
+            
+            let errorMsg = "Error saving confirmation: ";
+            try {
+                const jsonResponse = JSON.parse(xhr.responseText);
+                errorMsg += jsonResponse.message || jsonResponse.error || "Unknown error";
+            } catch (e) {
+                errorMsg += xhr.responseText || error || "Unknown error";
+            }
+            alert(errorMsg);
+        },
+        complete: function() {
+            $("#saveConfirmation").prop("disabled", false).text("Save");
+        }
+    });
+});
+    </script>
+</body>
+</html>
+
+

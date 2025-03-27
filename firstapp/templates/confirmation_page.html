@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation Records</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #7a275c;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #7a275c;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .status-confirmed {
+            color: green;
+            font-weight: bold;
+        }
+        .status-rejected {
+            color: red;
+            font-weight: bold;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #7a275c;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .back-btn:hover {
+            background-color: #5a1d44;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Confirmation Records</h1>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Customer Name</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for confirmation in confirmations %}
+                <tr>
+                    <td>{{ confirmation.company_name }}</td>
+                    <td>{{ confirmation.customer.name }}</td>
+                    <td class="{% if confirmation.status == 'advertisement_confirm' %}status-confirmed{% else %}status-rejected{% endif %}">
+                        {{ confirmation.get_status_display }}
+                    </td>
+                    <td>{{ confirmation.date }}</td>
+                    <td>
+                        <a href="{% url 'customer_details' confirmation.customer.id %}">View Customer</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">No confirmation records found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <a href="{% url 'index' %}" class="back-btn">Back to Dashboard</a>
+    </div>
+</body>
+</html>

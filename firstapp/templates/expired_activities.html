@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Expired Customer Activities</title>
+    <style>
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            text-align: center;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            border: 2px solid #343a40;
+        }
+        th {
+            background-color: #343a40;
+            color: white;
+            padding: 12px;
+            border: 2px solid #ffffff;
+        }
+        td {
+            padding: 12px;
+            border: 2px solid #343a40;
+        }
+        tr:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+        tr:hover {
+            background-color: #e0e0e0;
+            transition: 0.3s;
+        }
+        td.call-date { 
+            background-color: #c3e6cb;
+            color: #155724; 
+            font-weight: bold;
+        }
+
+        td.email-date { 
+            background-color: #f8d7da; 
+            color: #721c24; 
+            font-weight: bold;
+        }
+       td.whatsapp-date { 
+            background-color: #d1ecf1;
+            color: #0c5460; 
+            font-weight: bold;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            font-size: 18px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            border: 2px solid #0056b3;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <center>
+        <h2>Expired Customer Activities</h2>
+
+        {% if expired_activities %}
+        <table border="3">
+            <tr>
+                <th>Customer Name</th>
+                <th>Call Date</th>
+                <th>Email Date</th>
+                <th>WhatsApp Date</th>
+            </tr>
+            {% for key, activity in expired_activities.items %}
+            <tr>
+                <td>{{ activity.customer.name }}</td>
+                <td class="call-date">{{ activity.call_date|default:"-" }}</td>
+                <td class="email-date">{{ activity.email_date|default:"-" }}</td>
+                <td class="whatsapp-date">{{ activity.whatsapp_date|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+            <p>No expired activities found.</p>
+        {% endif %}
+
+        <a href="{% url 'customer_schedule' %}">
+            <button>Back to Scheduled Activities</button>
+        </a>    
+        <a href="{% url 'index' %}">
+            <button>HOME</button>
+        </a>
+    </center>
+</body>
+</html>
